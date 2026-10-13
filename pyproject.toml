@@ -1,0 +1,37 @@
+[build-system]
+requires = ['setuptools>=61.0']
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'tcg'
+version = '0.1.0'
+description = 'Terminal Card Games (TCG) — a collection of card games playable in the terminal'
+readme = 'README.md'
+requires-python = '>=3.10'
+dependencies = [
+    'termcolor>=2.0',
+    'prompt_toolkit>=3.0',
+]
+
+[project.scripts]
+tcg = 'main:main'
+
+[tool.setuptools]
+py-modules = ['main']
+
+[tool.setuptools.packages.find]
+where = ['.']
+include = ['core*', 'solitaire*', 'menu*']
+
+[tool.ruff]
+# maximum line length
+line-length = 121
+target-version = 'py310'
+
+[tool.ruff.format]
+# prefer single quotes for string literals
+quote-style = 'single'
+
+[tool.ruff.lint]
+# standard linter rules: e (pycodestyle errors), w (warnings), f (pyflakes), i (isort)
+select = ['E', 'W', 'F', 'I']
