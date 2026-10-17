@@ -35,22 +35,29 @@ class TestSolitaireMouse(unittest.TestCase):
         col = self.board.tableau[0]
         col.cards = [c1, c2, c3]
 
+        # click middle card divider |____| (c2 at y_offset=4) selects 2-card run [c3, c2]
+        self.assertTrue(self._click_cell(1, 0, y_offset=4))
+        self.assertEqual(self.board.from_pile, col)
+        self.assertEqual(col.selected_cards, [c3, c2])
+        self.board.deselect_from_pile()
+
         # click middle card (c2 at y_offset=3) -> selects 2-card run [c3, c2]
         self.assertTrue(self._click_cell(1, 0, y_offset=3))
         self.assertEqual(self.board.from_pile, col)
         self.assertEqual(col.selected_cards, [c3, c2])
 
-        # click base card (c1 at y_offset=1) -> expands selection to 3 cards
-        self.assertTrue(self._click_cell(1, 0, y_offset=1))
+        # click base card divider |____| (c1 at y_offset=2) -> expands selection to 3 cards
+        self.assertTrue(self._click_cell(1, 0, y_offset=2))
         self.assertEqual(col.select_count, 3)
 
-        # clicking the same card depth again deselects the pile
+        # clicking the same card depth again (c1 face at y_offset=1) deselects the pile
         self.assertTrue(self._click_cell(1, 0, y_offset=1))
         self.assertIsNone(self.board.from_pile)
 
     def test_face_down_card_interactions(self):
-        # buried face-down card in column 1 (y_offset=1) is ignored
+        # buried face-down card in column 1 (face line at y_offset=1, divider at y_offset=2) is ignored
         self.assertFalse(self._click_cell(1, 1, y_offset=1))
+        self.assertFalse(self._click_cell(1, 1, y_offset=2))
         self.assertIsNone(self.board.from_pile)
 
         # exposed face-down top card in column 0 flips face-up without selecting
@@ -122,8 +129,9 @@ class TestSolitaireMouse(unittest.TestCase):
         self.assertFalse(self._click_cell(1, 0, y_offset=0))  # tableau 0 top border
         self.assertFalse(self._click_cell(1, 0, y_offset=4))  # tableau 0 bottom border
 
-        # intermediate card border (|____|) in stretched pile does not select cards
+        # intermediate card border (|____|) in stretched pile belongs to the card above it
         col = self.board.tableau[0]
         col.cards = [Card(Rank.KING, Suit.HEART, face_up=True), Card(Rank.QUEEN, Suit.SPADE, face_up=True)]
-        self.assertFalse(self._click_cell(1, 0, y_offset=2))  # divider between king and queen
-        self.assertIsNone(self.board.from_pile)
+        self.assertTrue(self._click_cell(1, 0, y_offset=2))  # divider of king (card above)
+        self.assertEqual(self.board.from_pile, col)
+        self.assertEqual(col.selected_cards, [col.cards[1], col.cards[0]])

@@ -43,9 +43,9 @@ class TestBoardMouseController(unittest.TestCase):
         # non-navigable spacer pile (row 1, col 1)
         self.assertIsNone(self.controller.hit_test(7, 7))
 
-        # pile borders, card overlaps, and indicator lines across rows 0-2 (col 0)
-        # row 0: (0, 4, 5), row 1: (6, 8, 10, 14, 15), row 2: (16, 20, 21)
-        for y in (0, 4, 5, 6, 8, 10, 14, 15, 16, 20, 21):
+        # pile borders and indicator lines across rows 0-2 (col 0)
+        # row 0: (0, 4, 5), row 1: (6, 14, 15), row 2: (16, 20, 21)
+        for y in (0, 4, 5, 6, 14, 15, 16, 20, 21):
             self.assertIsNone(self.controller.hit_test(2, y))
 
     def test_hit_test_unstretched_rows(self):
@@ -56,9 +56,11 @@ class TestBoardMouseController(unittest.TestCase):
         self.assertEqual(self.controller.hit_test(2, 19), GridHit(2, 0, None))
 
     def test_hit_test_stretched_row_card_indices(self):
-        # row 1 cards: y=7 card 0, y=9 card 1, y=11..13 card 2
-        self.assertEqual(self.controller.hit_test(2, 7), GridHit(1, 0, 0))
-        self.assertEqual(self.controller.hit_test(2, 9), GridHit(1, 0, 1))
+        # row 1 cards: y=7, 8 card 0 (including divider |____|); y=9, 10 card 1; y=11..13 card 2
+        for y in (7, 8):
+            self.assertEqual(self.controller.hit_test(2, y), GridHit(1, 0, 0))
+        for y in (9, 10):
+            self.assertEqual(self.controller.hit_test(2, y), GridHit(1, 0, 1))
         for y in (11, 12, 13):
             self.assertEqual(self.controller.hit_test(2, y), GridHit(1, 0, 2))
         for y in (6, 14):
