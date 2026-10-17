@@ -74,13 +74,13 @@ class Pile:
 
     def get_card_at_offset(self, y_offset: int) -> int | None:
         """Return index of the card located at vertical line y_offset within this pile."""
-        if y_offset < 0 or self.is_empty():
+        if y_offset < 1 or self.is_empty():
             return None
         top_idx = len(self.cards) - 1
-        top_card_y = top_idx * self.OVERLAP
+        top_card_y = top_idx * self.OVERLAP + 1
         if y_offset < top_card_y:
-            return y_offset // self.OVERLAP
-        if y_offset < top_card_y + self.HEIGHT:
+            return (y_offset - 1) // self.OVERLAP
+        if y_offset < top_card_y + 3:
             return top_idx
         return None
 

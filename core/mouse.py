@@ -71,7 +71,7 @@ class BoardMouseController:
                     return GridHit(row_idx, col)
 
                 card_idx = pile.get_card_at_offset(y_offset)
-                if card_idx is None or y_offset == card_idx * pile.OVERLAP:
+                if card_idx is None:
                     return None
                 return GridHit(row_idx, col, card_idx)
 

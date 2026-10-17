@@ -149,10 +149,12 @@ class TestPile(unittest.TestCase):
 
     def test_get_card_at_offset(self):
         pile = Pile([self.ace, self.two])
-        self.assertEqual(pile.get_card_at_offset(0), 0)
+        self.assertIsNone(pile.get_card_at_offset(0))  # top border
         self.assertEqual(pile.get_card_at_offset(1), 0)
-        self.assertEqual(pile.get_card_at_offset(2), 1)
-        self.assertEqual(pile.get_card_at_offset(6), 1)
+        self.assertEqual(pile.get_card_at_offset(2), 0)  # intermediate bottom divider
+        self.assertEqual(pile.get_card_at_offset(3), 1)
+        self.assertEqual(pile.get_card_at_offset(5), 1)
         self.assertIsNone(pile.get_card_at_offset(-1))
+        self.assertIsNone(pile.get_card_at_offset(6))  # bottom border
         self.assertIsNone(pile.get_card_at_offset(7))
         self.assertIsNone(Pile([]).get_card_at_offset(0))
