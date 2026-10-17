@@ -30,6 +30,11 @@ class SolitaireGame(Game):
         def _(event):
             self.board.deselect_from_pile()
 
+        @self.kb.add('f')
+        @self.kb.add('a')
+        def _(event):
+            self.board.auto_move_to_foundation()
+
         # jump directly to tableau columns (row 1, col 0..6)
         for col_idx in range(7):
 
