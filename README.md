@@ -22,7 +22,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10+-blue?style=flat-square" alt="Python version">
   <img src="https://img.shields.io/badge/TUI-prompt__toolkit-informational?style=flat-square" alt="prompt_toolkit">
-  <img src="https://img.shields.io/badge/tests-45%20passed-brightgreen?style=flat-square" alt="Tests status">
+  <img src="https://img.shields.io/badge/tests-66%20passed-brightgreen?style=flat-square" alt="Tests status">
   <img src="https://img.shields.io/badge/code%20style-ruff-black?style=flat-square" alt="Ruff style">
 </p>
 

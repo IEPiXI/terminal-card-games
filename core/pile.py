@@ -15,8 +15,13 @@ class Pile:
     Use cards=[] for an empty but interactive pile.
     """
 
-    def __init__(self, cards: list[Card] | None = None):
+    WIDTH: int = 6
+    HEIGHT: int = 5
+    OVERLAP: int = 2
+
+    def __init__(self, cards: list[Card] | None = None, stretched: bool = False):
         self.cards = cards  # none is intentional: marks a non-interactive spacer
+        self.stretched = stretched
 
     def __len__(self) -> int:
         """Return the number of cards in the pile."""
@@ -60,6 +65,25 @@ class Pile:
             visible.append(card)
         return visible
 
+    def get_height(self, stretched: bool | None = None) -> int:
+        """Return rendered height of this pile in lines."""
+        is_stretched = self.stretched if stretched is None else stretched
+        if self.is_none() or self.is_empty() or not is_stretched:
+            return self.HEIGHT
+        return (len(self.cards) - 1) * self.OVERLAP + self.HEIGHT
+
+    def get_card_at_offset(self, y_offset: int) -> int | None:
+        """Return index of the card located at vertical line y_offset within this pile."""
+        if y_offset < 0 or self.is_empty():
+            return None
+        top_idx = len(self.cards) - 1
+        top_card_y = top_idx * self.OVERLAP
+        if y_offset < top_card_y:
+            return y_offset // self.OVERLAP
+        if y_offset < top_card_y + self.HEIGHT:
+            return top_idx
+        return None
+
     # --- card actions ---
 
     def shuffle(self):
@@ -88,7 +112,9 @@ class Pile:
 
     # --- rendering ---
 
-    def get_print_string(self, stretched: bool = False, highlighted_cards: list[Card] | None = None) -> list[list[str]]:
+    def get_print_string(
+        self, stretched: bool | None = None, highlighted_cards: list[Card] | None = None
+    ) -> list[list[str]]:
         """
         Render the pile as a grid of terminal strings.
 
@@ -96,6 +122,7 @@ class Pile:
             stretched: Show every card individually (stretched out to the bottom).
             highlighted_cards: Cards to render with a highlighted red border.
         """
+        is_stretched = self.stretched if stretched is None else stretched
         highlighted = highlighted_cards or []
 
         def _hl(card: Card) -> bool:
@@ -105,14 +132,14 @@ class Pile:
             return colored(s, 'red') if highlight else s
 
         if self.is_none():
-            return [['      '] * 5]
+            return [[' ' * self.WIDTH] for _ in range(self.HEIGHT)]
 
         if self.is_empty():
             return [[' ____ '], ['|    |'], ['|    |'], ['|    |'], [' ¯¯¯¯ ']]
 
         result = []
 
-        if stretched:
+        if is_stretched:
             result.append([_color(' ____ ', _hl(self.cards[0]))])
 
             for i, card in enumerate(self.cards[:-1]):

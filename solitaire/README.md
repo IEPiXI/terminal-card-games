@@ -17,3 +17,12 @@ Terminal-based Solitaire (Klondike) game.
 | `m`                                         | Return to Main Menu                                    |
 | `r`                                         | Restart new game                                       |
 | `q` / `Ctrl+C`                              | Quit                                                   |
+
+### Mouse Controls
+
+| Action                  | Result                                     |
+| ----------------------- | ------------------------------------------ |
+| **Left Click** on Stock | Draw card to Waste (or recycle when empty) |
+| **Left Click** on Pile  | Select pile / move card(s) / flip card     |
+| **Left Click** on Card  | Select run starting from clicked card      |
+| **Double Click**        | Auto-move card to eligible Foundation      |

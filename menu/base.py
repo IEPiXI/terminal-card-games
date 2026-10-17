@@ -4,7 +4,10 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.mouse_events import MouseEvent
 from termcolor import colored
+
+from menu.mouse import handle_menu_mouse
 
 BORDER: str = '  O' + '=' * 69 + 'O'
 SCREEN_WIDTH: int = len(BORDER)
@@ -101,6 +104,10 @@ class Screen(ABC):
         output = '\n\n'.join(sections)
         return with_border(output) if self.bordered else output
 
+    def handle_mouse(self, mouse_event: MouseEvent) -> bool:
+        """Optional hook for screens that handle mouse input."""
+        return False
+
     def __str__(self) -> str:
         return self.render(color=False)
 
@@ -114,13 +121,19 @@ class SelectableScreen(Screen):
     items: Sequence[ScreenItem] = ()
     selected_idx: int = 0
 
-    def __init__(self, items: Sequence[ScreenItem] | None = None, on_select: SelectHandler | None = None) -> None:
+    def __init__(
+        self,
+        items: Sequence[ScreenItem] | None = None,
+        on_select: SelectHandler | None = None,
+        on_quit: Callable[[], None] | None = None,
+    ) -> None:
         super().__init__()
         self.items = list(items or self.items)
         if not self.items:
             raise ValueError('A selectable screen requires at least one item.')
         self.selected_idx %= len(self.items)
         self._on_select = on_select
+        self._on_quit = on_quit
         self._setup_keybindings()
 
     def _setup_keybindings(self) -> None:
@@ -164,6 +177,17 @@ class SelectableScreen(Screen):
     def format_item(self, item: ScreenItem) -> str:
         """Format an individual item for display."""
         return f'[{item.key}] {item.label}'
+
+    def cancel(self) -> None:
+        """Hook for screens that support cancellation (e.g., Esc)."""
+
+    def quit(self) -> None:
+        """Hook for screens that support quitting (e.g., q)."""
+        if self._on_quit:
+            self._on_quit()
+
+    def handle_mouse(self, mouse_event: MouseEvent) -> bool:
+        return handle_menu_mouse(self, mouse_event)
 
     def render_content(self, color: bool = True) -> list[str]:
         """Render selectable item lines with cursor markers and selection highlight."""

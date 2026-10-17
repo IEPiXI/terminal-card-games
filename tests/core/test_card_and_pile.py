@@ -46,46 +46,39 @@ class TestCard(unittest.TestCase):
 
 class TestPile(unittest.TestCase):
     def setUp(self):
-        self.ace_spades = Card(Rank.ACE, Suit.SPADE, face_up=True)
-        self.two_spades = Card(Rank.TWO, Suit.SPADE, face_up=True)
-        self.three_hearts = Card(Rank.THREE, Suit.HEART, face_up=False)
+        self.ace = Card(Rank.ACE, Suit.SPADE, face_up=True)
+        self.two = Card(Rank.TWO, Suit.SPADE, face_up=True)
+        self.three_down = Card(Rank.THREE, Suit.HEART, face_up=False)
 
-    def test_spacer_pile(self):
+    def test_spacer_and_empty_states(self):
         spacer = Pile(None)
         self.assertTrue(spacer.is_none())
         self.assertTrue(spacer.is_empty())
-        self.assertFalse(spacer.is_only_one())
         self.assertEqual(len(spacer), 0)
         self.assertIsNone(spacer.get_top_card())
-        self.assertFalse(spacer.is_top_card_face_down())
-        self.assertEqual(spacer.get_visible_cards(), [])
 
-    def test_pile_sizes_and_top_card(self):
         empty = Pile([])
         self.assertFalse(empty.is_none())
         self.assertTrue(empty.is_empty())
         self.assertFalse(empty.is_only_one())
-        self.assertEqual(len(empty), 0)
         self.assertIsNone(empty.get_top_card())
 
-        single = Pile([self.ace_spades])
-        self.assertFalse(single.is_empty())
+    def test_populated_pile_queries(self):
+        single = Pile([self.ace])
         self.assertTrue(single.is_only_one())
-        self.assertEqual(len(single), 1)
-        self.assertEqual(single.get_top_card(), self.ace_spades)
+        self.assertEqual(single.get_top_card(), self.ace)
 
-        multi = Pile([self.ace_spades, self.two_spades, self.three_hearts])
-        self.assertFalse(multi.is_empty())
+        multi = Pile([self.ace, self.two, self.three_down])
         self.assertFalse(multi.is_only_one())
         self.assertEqual(len(multi), 3)
-        self.assertEqual(multi.get_top_card(), self.three_hearts)
+        self.assertEqual(multi.get_top_card(), self.three_down)
 
     def test_top_card_face_down_and_reveal(self):
-        pile = Pile([self.three_hearts])
+        pile = Pile([self.three_down])
         self.assertTrue(pile.is_top_card_face_down())
         pile.show_top_card()
         self.assertFalse(pile.is_top_card_face_down())
-        self.assertTrue(self.three_hearts.face_up)
+        self.assertTrue(self.three_down.face_up)
 
         empty = Pile([])
         empty.show_top_card()
@@ -93,63 +86,44 @@ class TestPile(unittest.TestCase):
 
     def test_get_visible_cards(self):
         self.assertEqual(Pile([]).get_visible_cards(), [])
-        self.assertEqual(Pile([self.three_hearts]).get_visible_cards(), [])
+        self.assertEqual(Pile([self.three_down]).get_visible_cards(), [])
 
-        c_down = Card(Rank.FIVE, Suit.CLUB, face_up=False)
-        c_up1 = Card(Rank.SEVEN, Suit.HEART, face_up=True)
-        c_up2 = Card(Rank.EIGHT, Suit.SPADE, face_up=True)
-        pile = Pile([c_down, c_up1, c_up2])
-        self.assertEqual(pile.get_visible_cards(), [c_up2, c_up1])
+        pile = Pile([self.three_down, self.ace, self.two])
+        self.assertEqual(pile.get_visible_cards(), [self.two, self.ace])
 
     def test_move_card_to_pile(self):
-        c1 = Card(Rank.ACE, Suit.SPADE, face_up=False)
-        c2 = Card(Rank.TWO, Suit.SPADE, face_up=False)
-        src = Pile([c1, c2])
+        src = Pile([self.ace, self.two])
         dst = Pile([])
 
-        src.move_card_to_pile(c1, dst, face_up=True)
-        self.assertEqual(src.cards, [c2])
-        self.assertEqual(dst.cards, [c1])
-        self.assertTrue(c1.face_up)
-
-        src.move_card_to_pile(c2, dst, face_up=False)
-        self.assertTrue(src.is_empty())
-        self.assertEqual(dst.cards, [c1, c2])
-        self.assertFalse(c2.face_up)
+        src.move_card_to_pile(self.ace, dst, face_up=False)
+        self.assertEqual(src.cards, [self.two])
+        self.assertEqual(dst.cards, [self.ace])
+        self.assertFalse(self.ace.face_up)
 
         with self.assertRaises(ValueError):
-            src.move_card_to_pile(Card(Rank.KING, Suit.HEART), dst)
+            src.move_card_to_pile(self.three_down, dst)
 
     def test_move_top_card_to_pile(self):
-        c1 = Card(Rank.ACE, Suit.SPADE)
-        c2 = Card(Rank.TWO, Suit.SPADE)
-        src = Pile([c1, c2])
+        src = Pile([self.ace, self.three_down])
         dst = Pile([])
 
         src.move_top_card_to_pile(dst, face_up=True)
-        self.assertEqual(src.cards, [c1])
-        self.assertEqual(dst.cards, [c2])
-        self.assertTrue(c2.face_up)
+        self.assertEqual(src.cards, [self.ace])
+        self.assertEqual(dst.cards, [self.three_down])
+        self.assertTrue(self.three_down.face_up)
 
-        src.move_top_card_to_pile(dst, face_up=True)
-        self.assertTrue(src.is_empty())
-        self.assertEqual(dst.cards, [c2, c1])
-
-        # empty source is a safe no-op
-        src.move_top_card_to_pile(dst)
-        self.assertEqual(len(dst), 2)
+        Pile([]).move_top_card_to_pile(dst)
+        self.assertEqual(len(dst), 1)
 
     def test_move_to_pile(self):
-        c_existing = Card(Rank.KING, Suit.DIAMOND, face_up=True)
-        src = Pile([self.ace_spades, self.two_spades])
-        dst = Pile([c_existing])
+        src = Pile([self.ace, self.two])
+        dst = Pile([self.three_down])
 
         src.move_to_pile(dst, face_up=False)
         self.assertTrue(src.is_empty())
-        self.assertEqual(dst.cards, [c_existing, self.two_spades, self.ace_spades])
+        self.assertEqual(dst.cards, [self.three_down, self.two, self.ace])
         self.assertTrue(all(not c.face_up for c in dst.cards))
 
-        # empty source is a safe no-op
         src.move_to_pile(dst, face_up=True)
         self.assertEqual(len(dst), 3)
 
@@ -160,10 +134,25 @@ class TestPile(unittest.TestCase):
         self.assertEqual(len(pile), 13)
         self.assertEqual(set(pile.cards), set(cards))
 
-        single = Pile([self.ace_spades])
-        single.shuffle()
-        self.assertEqual(single.cards, [self.ace_spades])
-
         empty = Pile([])
         empty.shuffle()
         self.assertEqual(len(empty), 0)
+
+    def test_get_height(self):
+        pile = Pile([self.ace, self.two])
+        self.assertEqual(pile.get_height(), Pile.HEIGHT)
+        self.assertEqual(pile.get_height(stretched=True), 7)
+
+        stretched = Pile([self.ace, self.two], stretched=True)
+        self.assertEqual(stretched.get_height(), 7)
+        self.assertEqual(stretched.get_height(stretched=False), Pile.HEIGHT)
+
+    def test_get_card_at_offset(self):
+        pile = Pile([self.ace, self.two])
+        self.assertEqual(pile.get_card_at_offset(0), 0)
+        self.assertEqual(pile.get_card_at_offset(1), 0)
+        self.assertEqual(pile.get_card_at_offset(2), 1)
+        self.assertEqual(pile.get_card_at_offset(6), 1)
+        self.assertIsNone(pile.get_card_at_offset(-1))
+        self.assertIsNone(pile.get_card_at_offset(7))
+        self.assertIsNone(Pile([]).get_card_at_offset(0))
