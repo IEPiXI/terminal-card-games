@@ -1,5 +1,6 @@
 from core.game import Game
 from solitaire.board import Board
+from solitaire.mouse import SolitaireMouseController
 
 
 class SolitaireGame(Game):
@@ -7,6 +8,9 @@ class SolitaireGame(Game):
 
     def __init__(self):
         super().__init__(Board())
+
+    def create_mouse_controller(self) -> SolitaireMouseController:
+        return SolitaireMouseController(self.board)
 
     def setup_keybindings(self):
         @self.kb.add('w')

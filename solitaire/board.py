@@ -13,7 +13,7 @@ class Board(BaseBoard):
         self.stock_pile = SolitairePile(all_cards)
         self.stock_pile.shuffle()
 
-        self.tableau: list[SolitairePile] = [SolitairePile([]) for _ in range(7)]
+        self.tableau: list[SolitairePile] = [SolitairePile([], stretched=True) for _ in range(7)]
         self.foundations: list[SolitairePile] = [SolitairePile([]) for _ in range(4)]
         self.waste_pile = SolitairePile([])
 
@@ -59,6 +59,38 @@ class Board(BaseBoard):
 
     # --- game logic ---
 
+    def can_move_to(self, to_pile: SolitairePile) -> bool:
+        """True if the currently chosen from_pile can legally move to to_pile."""
+        if self.from_pile is None or to_pile.is_top_card_face_down():
+            return False
+        return (to_pile in self.foundations and self.from_pile.is_valid_foundation_move(to_pile)) or (
+            to_pile in self.tableau and self.from_pile.is_valid_tableau_move(to_pile)
+        )
+
+    def _execute_move(self, from_pile: SolitairePile, to_pile: SolitairePile):
+        """Move selected cards, flip newly exposed top card, and restore cursor."""
+        from_pile.move_selected_cards_to_pile(to_pile)
+        if not from_pile.is_empty():
+            from_pile.show_top_card()
+        self.from_pile = from_pile
+        self.deselect_from_pile()
+
+    def auto_move_to_foundation(self, pile: SolitairePile | None = None) -> bool:
+        """Attempt to move the top card of `pile` (default: current_pile) to an eligible foundation."""
+        source = pile or self.current_pile
+        if source not in (*self.tableau, self.waste_pile) or source.is_empty() or source.is_top_card_face_down():
+            return False
+
+        card = source.get_top_card()
+        target = next((f for f in self.foundations if f.can_accept_foundation_card(card)), None)
+        if target is None:
+            return False
+
+        self.deselect_from_pile()
+        source.set_select_count(1)
+        self._execute_move(source, target)
+        return True
+
     def choose_pile(self):
         """Handle selecting, deselecting, and moving cards between piles."""
         to_pile = self.current_pile
@@ -73,6 +105,7 @@ class Board(BaseBoard):
             return
 
         if to_pile.is_top_card_face_down():
+            self.deselect_from_pile()
             to_pile.show_top_card()
             to_pile.reset_select_count()
             return
@@ -83,25 +116,13 @@ class Board(BaseBoard):
 
         if self.from_pile is None:
             if not to_pile.is_empty():
+                if not to_pile.is_selected:
+                    to_pile.select()
                 self.from_pile = to_pile
             return
 
-        # attempting a move from from_pile to to_pile
-        if to_pile == self.waste_pile:
-            return
-
-        is_valid = (to_pile in self.foundations and self.from_pile.is_valid_foundation_move(to_pile)) or (
-            to_pile in self.tableau and self.from_pile.is_valid_tableau_move(to_pile)
-        )
-
-        if is_valid:
-            from_p = self.from_pile
-            from_p.move_selected_cards_to_pile(to_pile)
-            from_p.deselect()
-            to_pile.reset_select_count()
-            if not from_p.is_empty():
-                from_p.show_top_card()
-            self.from_pile = None
+        if self.can_move_to(to_pile):
+            self._execute_move(self.from_pile, to_pile)
 
     # --- navigation & selection hooks ---
 
@@ -126,8 +147,3 @@ class Board(BaseBoard):
             color = 'yellow' if (pile.is_selected and is_chosen) else ('red' if is_chosen else None)
             return (self.INDICATOR, color)
         return None
-
-    # --- rendering ---
-
-    def get_print_string(self) -> list[list[str]]:
-        return self._build_grid(self.board[0]) + self._build_grid(self.board[1], stretched=True)

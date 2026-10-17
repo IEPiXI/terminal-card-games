@@ -4,17 +4,7 @@ from core.pile import Pile
 
 
 class Board:
-    """
-    Generic grid-based card game board.
-
-    Subclasses implement reset() to initialise self.board and
-    self.current_selection, then override hooks for game-specific behaviour:
-      - is_navigable    : which cells can be navigated to
-      - _on_leave       : called when the cursor leaves a cell
-      - _on_enter       : called when the cursor enters a cell
-      - _pile_indicator : what indicator (if any) to draw beneath a pile
-      - get_print_string: override for per-row stretch control
-    """
+    """Generic grid-based card game board."""
 
     INDICATOR = '  /\\  '
 
@@ -72,10 +62,17 @@ class Board:
     # --- hooks ---
 
     def is_navigable(self, row: int, col: int) -> bool:
-        """Return False to skip this cell (e.g. visual spacers). Default: non-spacer cells are navigable."""
+        """Return False to skip this cell (e.g. visual spacers)."""
         if 0 <= row < len(self.board) and 0 <= col < len(self.board[row]):
             return not self.board[row][col].is_none()
         return False
+
+    def get_row_height(self, row: int) -> int:
+        """Return the total height in lines of a board row, including the indicator line."""
+        if not (0 <= row < len(self.board)):
+            return Pile.HEIGHT + 1
+        max_h = max((p.get_height() for p in self.board[row]), default=Pile.HEIGHT)
+        return max_h + 1
 
     def _on_leave(self, row: int, col: int):
         """Called when the cursor leaves a cell. Override for deselect logic."""
@@ -84,21 +81,18 @@ class Board:
         """Called when the cursor enters a cell. Override for select logic."""
 
     def _pile_indicator(self, pile: Pile) -> tuple[str, str | None] | None:
-        """
-        Return (indicator_text, color_or_None) to show beneath a pile, or None.
-        Default: show a plain arrow under the cursor pile only.
-        """
+        """Return (indicator_text, color_or_None) to show beneath a pile, or None."""
         if pile is self.current_pile:
             return (self.INDICATOR, None)
         return None
 
     # --- rendering ---
 
-    def _build_grid(self, piles: list[Pile], stretched: bool = False) -> list[list[str]]:
+    def _build_grid(self, piles: list[Pile]) -> list[list[str]]:
         """Build a 2D character grid for a row of piles, including indicators."""
-        pile_strings = [p.get_print_string(stretched) for p in piles]
+        pile_strings = [p.get_print_string() for p in piles]
         max_height = max((len(p) for p in pile_strings), default=1)
-        grid = [['      '] * len(piles) for _ in range(max_height + 1)]
+        grid = [[' ' * Pile.WIDTH] * len(piles) for _ in range(max_height + 1)]
 
         for col, (pile, lines) in enumerate(zip(piles, pile_strings)):
             for row_idx, line in enumerate(lines):
@@ -112,7 +106,7 @@ class Board:
         return grid
 
     def get_print_string(self) -> list[list[str]]:
-        """Render every board row unstretched. Override for per-row stretch control."""
+        """Render all board rows."""
         result = []
         for row in self.board:
             result.extend(self._build_grid(row))

@@ -17,9 +17,13 @@ class ConfirmScreen(SelectableScreen):
     )
 
     def __init__(self, message: str, on_close: Callable[[bool], None]) -> None:
+        self._on_close = on_close
         super().__init__(on_select=lambda item: on_close(item.key == 'y'))
         self.title = f'♠   ♥   {message}   ♦   ♣'
 
         @self.kb.add('escape')
         def _(event):
-            on_close(False)
+            self.cancel()
+
+    def cancel(self) -> None:
+        self._on_close(False)

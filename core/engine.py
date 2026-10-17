@@ -8,9 +8,10 @@ from prompt_toolkit.formatted_text import ANSI
 from prompt_toolkit.key_binding import DynamicKeyBindings, KeyBindings, merge_key_bindings
 from prompt_toolkit.layout import Layout
 from prompt_toolkit.layout.containers import Window
-from prompt_toolkit.layout.controls import FormattedTextControl
+from prompt_toolkit.mouse_events import MouseEvent
 
 from core.game import Game
+from core.mouse import MouseTextControl
 from menu.base import Screen, ScreenItem
 from menu.confirm_screen import ConfirmScreen
 from menu.main_menu import TCGMenu
@@ -42,10 +43,11 @@ class GameEngine:
         self.state: State = State.MENU
         self.game: Game | None = None
         self.confirm_screen: ConfirmScreen | None = None
+        self.app: Application | None = None
 
         menu_items = [ScreenItem(g.shortcut, g.title, g.id) for g in games]
-        self.menu = TCGMenu(menu_items, on_select=self._on_menu_select)
-        self.win_screen = WinScreen(on_select=self._on_win_select)
+        self.menu = TCGMenu(menu_items, on_select=self._on_menu_select, on_quit=self.prompt_quit)
+        self.win_screen = WinScreen(on_select=self._on_win_select, on_quit=self.prompt_quit)
 
         self.kb = KeyBindings()
         self._setup_keybindings()
@@ -110,6 +112,16 @@ class GameEngine:
 
         self.confirm_screen = ConfirmScreen(message, on_close=_resolve)
 
+    def prompt_quit(self, exit_action: Callable[[], None] | None = None):
+        """Prompt user to confirm quitting."""
+        action = exit_action or self.exit
+        self.confirm('Do you really want to quit?', action)
+
+    def exit(self):
+        """Exit the application."""
+        if self.app is not None:
+            self.app.exit()
+
     def _setup_keybindings(self):
         not_confirming = Condition(lambda: not self.is_confirm)
         is_playing = Condition(lambda: self.is_playing)
@@ -120,7 +132,7 @@ class GameEngine:
 
         @self.kb.add('q', filter=not_confirming)
         def _(event):
-            self.confirm('Do you really want to quit?', event.app.exit)
+            self.prompt_quit(exit_action=event.app.exit)
 
         @self.kb.add('m', filter=is_playing)
         def _(event):
@@ -134,9 +146,14 @@ class GameEngine:
         """Render active screen depending on state."""
         return self.active_view.render(color=color)
 
+    def handle_mouse_event(self, mouse_event: MouseEvent) -> bool:
+        """Delegate mouse event directly to the active screen or game."""
+        return self.active_view.handle_mouse(mouse_event)
+
     def run(self):
         """Run the unified prompt_toolkit application loop."""
-        text_control = FormattedTextControl(
+        text_control = MouseTextControl(
+            on_mouse_event=self.handle_mouse_event,
             text=lambda: ANSI(self.render()),
             focusable=False,
             show_cursor=False,
@@ -148,11 +165,12 @@ class GameEngine:
                 DynamicKeyBindings(lambda: self.active_view.kb),
             ]
         )
-        app = Application(
+        self.app = Application(
             layout=layout,
             key_bindings=combined_kb,
             full_screen=True,
             refresh_interval=0.1,
+            mouse_support=True,
         )
-        app.ttimeoutlen = 0.05
-        app.run()
+        self.app.ttimeoutlen = 0.05
+        self.app.run()
