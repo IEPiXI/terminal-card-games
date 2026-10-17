@@ -9,6 +9,7 @@ Terminal-based Solitaire (Klondike) game.
 | `↑` `↓` `←` `→`                             | Navigate cursor between piles                          |
 | `Space` / `Enter`                           | Select pile / move cards / flip card / draw from stock |
 | `Esc`                                       | Deselect / cancel move                                 |
+| `f` / `a`                                   | Auto-move card to eligible Foundation                  |
 | `w` / `s`                                   | Increase / decrease number of cards selected           |
 | `1` – `7`                                   | Jump to Tableau column 1–7                             |
 | `Shift+1` – `Shift+4` / `Ctrl+1` – `Ctrl+4` | Jump to Foundation 1–4                                 |
