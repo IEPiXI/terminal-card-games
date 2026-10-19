@@ -1,8 +1,10 @@
 from core.engine import GameEngine, GameSpec
+from scoundrel.game import ScoundrelGame
 from solitaire.game import SolitaireGame
 
 GAMES: list[GameSpec] = [
     GameSpec('solitaire', 'Solitaire (Klondike)', SolitaireGame, shortcut='1'),
+    GameSpec('scoundrel', 'Scoundrel', ScoundrelGame, shortcut='2'),
 ]
 
 

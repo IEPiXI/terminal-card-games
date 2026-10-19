@@ -21,7 +21,7 @@ py-modules = ['main']
 
 [tool.setuptools.packages.find]
 where = ['.']
-include = ['core*', 'solitaire*', 'menu*']
+include = ['core*', 'solitaire*', 'scoundrel*', 'menu*']
 
 [tool.ruff]
 # maximum line length
