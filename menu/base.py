@@ -1,4 +1,3 @@
-import re
 from abc import ABC
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -7,11 +6,11 @@ from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.mouse_events import MouseEvent
 from termcolor import colored
 
+from core.utils import format_border, strip_ansi
 from menu.mouse import handle_menu_mouse
 
-BORDER: str = '  O' + '=' * 69 + 'O'
+BORDER: str = '  ' + format_border(71)
 SCREEN_WIDTH: int = len(BORDER)
-_ANSI_ESCAPE_RE = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')
 
 
 @dataclass(frozen=True)
@@ -25,11 +24,6 @@ class ScreenItem:
     def __post_init__(self) -> None:
         if not self.value:
             object.__setattr__(self, 'value', self.key)
-
-
-def strip_ansi(text: str) -> str:
-    """Return text with ANSI escape codes removed."""
-    return _ANSI_ESCAPE_RE.sub('', text)
 
 
 def center_line(text: str, width: int = SCREEN_WIDTH) -> str:
