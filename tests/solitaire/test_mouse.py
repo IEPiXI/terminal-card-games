@@ -12,7 +12,7 @@ class TestSolitaireMouse(unittest.TestCase):
 
     def _click_cell(self, row: int, col: int, y_offset: int = 1) -> bool:
         x = col * 6 + 2
-        y = (0 if row == 0 else 6) + y_offset
+        y = self.board.get_header_height() + (0 if row == 0 else 6) + y_offset
         return self.game.handle_mouse(make_click(x, y))
 
     def test_click_stock_draws_and_recycles(self):

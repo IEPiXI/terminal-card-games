@@ -1,14 +1,20 @@
 from core.board import Board as BaseBoard
 from core.card import Card, Rank, Suit
+from core.hud import HUDItem
 from core.pile import Pile
+from core.timer import GameTimer
 from solitaire.pile import SolitairePile
 
 
 class Board(BaseBoard):
     """Solitaire board implementation."""
 
+    moves: int
+    timer: GameTimer
+
     def reset(self):
         """Reset the Solitaire board to a newly dealt game."""
+        super().reset()
         all_cards: list[Card] = [Card(rank, suit) for suit in Suit for rank in Rank]
         self.stock_pile = SolitairePile(all_cards)
         self.stock_pile.shuffle()
@@ -18,6 +24,8 @@ class Board(BaseBoard):
         self.waste_pile = SolitairePile([])
 
         self.from_pile: SolitairePile | None = None
+        self.moves = 0
+        self.timer = GameTimer()
 
         self.board: list[list[SolitairePile]] = [
             [*self.foundations, SolitairePile(None), self.waste_pile, self.stock_pile],
@@ -51,11 +59,14 @@ class Board(BaseBoard):
 
     def is_won(self) -> bool:
         """True if all 4 foundations are valid and complete (13 cards, Ace to King, all 4 suits)."""
-        return (
+        won = (
             len(self.foundations) == 4
             and all(f.is_complete_foundation() for f in self.foundations)
             and {f.cards[0].suit for f in self.foundations} == set(Suit)
         )
+        if won:
+            self.timer.stop()
+        return won
 
     # --- game logic ---
 
@@ -67,11 +78,16 @@ class Board(BaseBoard):
             to_pile in self.tableau and self.from_pile.is_valid_tableau_move(to_pile)
         )
 
+    def get_hud_items(self) -> list[HUDItem]:
+        """Return live Solitaire stats to display in the HUD."""
+        return [HUDItem('Time', self.timer), HUDItem('Moves', self.moves)]
+
     def _execute_move(self, from_pile: SolitairePile, to_pile: SolitairePile):
         """Move selected cards, flip newly exposed top card, and restore cursor."""
         from_pile.move_selected_cards_to_pile(to_pile)
         if not from_pile.is_empty():
             from_pile.show_top_card()
+        self.moves += 1
         self.from_pile = from_pile
         self.deselect_from_pile()
 
@@ -98,9 +114,12 @@ class Board(BaseBoard):
         if to_pile == self.stock_pile:
             self.deselect_from_pile()
             if self.stock_pile.is_empty():
-                self.waste_pile.move_to_pile(self.stock_pile, face_up=False)
+                if not self.waste_pile.is_empty():
+                    self.waste_pile.move_to_pile(self.stock_pile, face_up=False)
+                    self.moves += 1
             else:
                 self.stock_pile.move_top_card_to_pile(self.waste_pile, face_up=True)
+                self.moves += 1
             self.stock_pile.reset_select_count()
             return
 
@@ -108,6 +127,7 @@ class Board(BaseBoard):
             self.deselect_from_pile()
             to_pile.show_top_card()
             to_pile.reset_select_count()
+            self.moves += 1
             return
 
         if self.from_pile == to_pile:

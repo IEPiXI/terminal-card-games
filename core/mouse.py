@@ -54,7 +54,9 @@ class BoardMouseController:
             return None
 
         col = x // Pile.WIDTH
-        y_start = 0
+        y_start = self.board.get_header_height()
+        if y < y_start:
+            return None
 
         for row_idx, row in enumerate(self.board.board):
             row_height = self.board.get_row_height(row_idx)

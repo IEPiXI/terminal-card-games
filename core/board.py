@@ -1,5 +1,8 @@
+from collections.abc import Sequence
+
 from termcolor import colored
 
+from core.hud import HUDItem, render_hud
 from core.pile import Pile
 
 
@@ -67,6 +70,22 @@ class Board:
             return not self.board[row][col].is_none()
         return False
 
+    def get_hud_items(self) -> Sequence[HUDItem]:
+        """Hook for games to provide live HUD stat items (e.g. [HUDItem('Time', timer), HUDItem('Moves', count)])."""
+        return []
+
+    def get_header_lines(self) -> list[str]:
+        """Render any header lines above the board (empty if no HUD items)."""
+        return render_hud(self.get_hud_items(), self.get_width())
+
+    def get_header_height(self) -> int:
+        """Return the total height in lines of the header above the board."""
+        return len(self.get_header_lines())
+
+    def get_width(self) -> int:
+        """Return total width of the board in characters based on columns."""
+        return max((len(row) for row in self.board), default=0) * Pile.WIDTH
+
     def get_row_height(self, row: int) -> int:
         """Return the total height in lines of a board row, including the indicator line."""
         if not (0 <= row < len(self.board)):
@@ -106,8 +125,8 @@ class Board:
         return grid
 
     def get_print_string(self) -> list[list[str]]:
-        """Render all board rows."""
-        result = []
+        """Render all board rows, preceded by any header lines."""
+        result = [[line] for line in self.get_header_lines()]
         for row in self.board:
             result.extend(self._build_grid(row))
         return result
